@@ -34,6 +34,7 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/swagger-ui/**",
             "/webjars/**",
+            "/eureka/**",
     };
 
     @Autowired
