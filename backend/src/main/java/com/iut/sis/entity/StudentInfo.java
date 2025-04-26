@@ -15,7 +15,9 @@ import java.util.Set;
 @Setter
 public class StudentInfo {
     @Id
-    @Column(name = "student_id", unique = true, nullable = false)
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    private int id;
+
     private String studentId; // Format: 210041132
 
     @OneToOne

@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface SemesterRepository extends JpaRepository<Semester, Integer> {
     Optional<Semester> findByIsCurrent(boolean isCurrent);
-    List<Semester> findBySessionId(int sessionId);
-    Optional<Semester> findBySemesterNumberAndSessionId(int semesterNumber, int sessionId);
+    List<Semester> findAllByIsCurrent(boolean isCurrent);
+    List<Semester> findBySessionId(Integer sessionId);
 }

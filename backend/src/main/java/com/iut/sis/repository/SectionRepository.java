@@ -9,4 +9,5 @@ public interface SectionRepository extends JpaRepository<Section, Integer> {
     List<Section> findByCourseId(int courseId);
     List<Section> findBySemesterId(int semesterId);
     Section findBySectionNumberAndCourseIdAndSemesterId(int sectionNumber, int courseId, int semesterId);
+    
 }

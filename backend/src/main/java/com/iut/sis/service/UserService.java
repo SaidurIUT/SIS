@@ -24,14 +24,6 @@ public interface UserService {
 
     void deleteUser(Integer userId);
 
-//    @Transactional
-//    UserDto approveDoctor(int doctorId) throws MessagingException;
-//
-//    @Transactional
-//    UserDto rejectDoctor(int doctorId);
-
-//    List<UserDto> getPendingDoctorApprovals();
-
     public String validateVerificationToken(String token) ;
 
     String forgotPassword(String email);

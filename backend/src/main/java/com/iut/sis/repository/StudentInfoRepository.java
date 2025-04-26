@@ -20,4 +20,6 @@ public interface StudentInfoRepository extends JpaRepository<StudentInfo, String
                                         @Param("departmentId") int departmentId,
                                         @Param("courseCode") int courseCode,
                                         @Param("section") int section);
+
+    Optional<StudentInfo> findByUserId(int userId);
 }

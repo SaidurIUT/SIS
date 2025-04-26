@@ -11,9 +11,15 @@ import com.iut.sis.entity.Role;
 import com.iut.sis.entity.User;
 import com.iut.sis.exception.ApiException;
 import com.iut.sis.exception.ResourceNotFoundException;
+import com.iut.sis.payloads.AdminInfoDto;
+import com.iut.sis.payloads.StudentInfoDto;
+import com.iut.sis.payloads.TeacherInfoDto;
 import com.iut.sis.payloads.UserDto;
 import com.iut.sis.repository.RoleRepo;
 import com.iut.sis.repository.UserRepo;
+import com.iut.sis.service.AdminService;
+import com.iut.sis.service.StudentService;
+import com.iut.sis.service.TeacherService;
 import com.iut.sis.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +50,14 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleRepo roleRepo;
 
-//    @Autowired
-//    private DoctorInfoRepo doctorInfoRepo;
+    @Autowired
+    private StudentService studentService;
+
+    @Autowired
+    private AdminService adminService;
+
+    @Autowired
+    private TeacherService teacherService;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -69,21 +81,6 @@ public class UserServiceImpl implements UserService {
         user.setAbout(userDto.getAbout());
         user.setAge(userDto.getAge());
         user.setImageName(userDto.getImageName());
-
-        // Update DoctorInfo if it exists
-//        DoctorInfo doctorInfo = user.getDoctorInfo();
-//        if (doctorInfo != null) {
-//            DoctorInfoDto doctorInfoDto = userDto.getDoctorInfo();
-//            if (doctorInfoDto != null) {
-//                doctorInfo.setSpecialization(doctorInfoDto.getSpecialization());
-//                doctorInfo.setDegrees(doctorInfoDto.getDegrees());
-//                doctorInfo.setCertificates(doctorInfoDto.getCertificates());
-//                doctorInfo.setCV(doctorInfoDto.getCV());
-//                doctorInfo.setCertificateOfRegistration(doctorInfoDto.getCertificateOfRegistration());
-//                doctorInfo.setExperience(doctorInfoDto.getExperience());
-////	            doctorInfo.setApprovedByAdmin(doctorInfoDto.getApprovedByAdmin());
-//            }
-//        }
 
         User updatedUser = this.userRepo.save(user);
         return this.userToDto(updatedUser);
@@ -141,86 +138,36 @@ public class UserServiceImpl implements UserService {
 
         user.getRoles().add(role);
 
-        User newUser = this.userRepo.save(user);
+
 
         if(roleId==502) {
-            user.setImageName("user.png");
+            user.setImageName("student.png");
         }
         if (roleId == 503) {
-            user.setImageName("doctor.png");
+            user.setImageName("teacher.png");
         }
         if (roleId == 501) {
             user.setImageName("admin.png");
         }
 
-        // If the role is doctor (role ID 503), create a DoctorInfo entry
-//        if (roleId == 503) {
-//            DoctorInfoDto doctorInfoDto = userDto.getDoctorInfo();
-//            if (doctorInfoDto == null) {
-//                // Handle case where DoctorInfoDto is null
-//                DoctorInfo doctorInfo = new DoctorInfo();
-//                doctorInfo.setUser(newUser);
-//                doctorInfo.setDegrees("");
-//                doctorInfo.setCertificates("");
-//                doctorInfo.setExperience("");
-//                doctorInfo.setSpecialization("General"); // Example default value
-//                doctorInfo.setApprovedByAdmin("Pending");
-//
-//
-//                this.doctorInfoRepo.save(doctorInfo);
-//            } else {
-//                DoctorInfo doctorInfo = new DoctorInfo();
-//                doctorInfo.setUser(newUser);
-//                doctorInfo.setSpecialization(doctorInfoDto.getSpecialization());
-//                doctorInfo.setDegrees(doctorInfoDto.getDegrees());
-//                doctorInfo.setCertificates(doctorInfoDto.getCertificates());
-//                doctorInfo.setExperience(doctorInfoDto.getExperience());
-//                doctorInfo.setApprovedByAdmin("Pending");
-//
-//                this.doctorInfoRepo.save(doctorInfo);
-//            }
-//        }
+        User newUser = this.userRepo.save(user);
 
+        if(roleId == 501){
+            AdminInfoDto adminInfoDto = new AdminInfoDto();
+            adminService.registerAdmin(adminInfoDto, newUser.getId());
+        }
+        else if(roleId == 502){
+            StudentInfoDto studentInfoDto = new StudentInfoDto();
+            studentService.registerStudent(studentInfoDto, newUser.getId());
+        }
+        else if(roleId == 503){
+            TeacherInfoDto teacherInfoDto = new TeacherInfoDto();
+            teacherService.registerTeacher(teacherInfoDto, newUser.getId());
+        }
         return this.modelMapper.map(newUser, UserDto.class);
     }
 
-//    @Override
-//    @Transactional
-//    public UserDto approveDoctor(int userId) throws MessagingException {
-//        DoctorInfo doctorInfo = doctorInfoRepo.findByUser_Id(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("DoctorInfo", "userId", userId));
-//        doctorInfo.approve();
-//        doctorInfoRepo.save(doctorInfo);
-//
-//        // Return the updated User with DoctorInfo
-//        User user = doctorInfo.getUser();
-//        sendEmailDoctorConfirmation(user.getEmail(), user.getName());
-//        return userToDto(user);
-//    }
 
-//    @Override
-//    @Transactional
-//    public UserDto rejectDoctor(int userId) {
-//        DoctorInfo doctorInfo = doctorInfoRepo.findByUser_Id(userId)
-//                .orElseThrow(() -> new ResourceNotFoundException("DoctorInfo", "userId", userId));
-//        doctorInfo.reject();
-//        doctorInfoRepo.save(doctorInfo);
-//
-//        // Return the updated User with DoctorInfo
-//        User user = doctorInfo.getUser();
-//        return userToDto(user);
-//    }
-
-//    @Override
-//    public List<UserDto> getPendingDoctorApprovals() {
-//        List<DoctorInfo> pendingDoctors = doctorInfoRepo.findByApprovedByAdmin("Pending");
-//        return pendingDoctors.stream()
-//                .map(doctorInfo -> {
-//                    User user = doctorInfo.getUser();
-//                    return userToDto(user);
-//                })
-//                .collect(Collectors.toList());
-//    }
 
     @Override
     public String validateVerificationToken(String token) {
@@ -312,49 +259,6 @@ public class UserServiceImpl implements UserService {
     }
 
 
-//    // Send email reminder with improved theme and content
-//    private void sendEmailDoctorConfirmation(String email, String name) throws MessagingException {
-//        MimeMessage mimeMessage = mailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-//        helper.setTo(email);
-//        helper.setSubject("Welcome! You are a Registered Doctor at Health Pulse");
-//
-//        // Improved HTML template with blue health-sector theme
-//        String emailContent = "<html>"
-//                + "<body style='font-family: Arial, sans-serif; background-color: #f4f9ff; padding: 20px;'>"
-//                + "<div style='max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);'>"
-//                + "<div style='text-align: center;'>"
-//                + "</div>"
-//                + "<h1 style='color: #1E90FF; text-align: center; font-size: 24px; margin-bottom: 10px;'>Welcome, Dr. " + name + "!</h1>"
-//                + "<p style='font-size: 18px; color: #333333; text-align: center;'>"
-//                + "We are thrilled to have you as part of the Health Pulse team."
-//                + "</p>"
-//                + "<hr style='border: 0; height: 1px; background-color: #1E90FF;' />"
-//                + "<p style='font-size: 16px; color: #333333; line-height: 1.6;'>"
-//                + "As a registered doctor on Health Pulse, you now have access to several exciting features:"
-//                + "</p>"
-//                + "<ul style='font-size: 16px; color: #333333; line-height: 1.6;'>"
-//                + "<li>Add and manage blogs to share your expertise with patients and peers.</li>"
-//                + "<li>Schedule and manage appointments with ease.</li>"
-//                + "<li>Access various tools to grow your medical practice.</li>"
-//                + "</ul>"
-//                + "<div style='text-align: center; margin: 20px 0;'>"
-//                + "</div>"
-//                + "<p style='font-size: 16px; color: #333333;'>"
-//                + "We are confident that your journey with Health Pulse will be rewarding. If you need assistance, feel free to reach out to our support team."
-//                + "</p>"
-//                + "<p style='font-size: 16px; color: #333333;'>"
-//                + "Best regards,<br><strong>Health Pulse Team</strong>"
-//                + "</p>"
-//                + "<div style='text-align: center; margin-top: 20px;'>"
-//                + "</div>"
-//                + "</div>"
-//                + "</body>"
-//                + "</html>";
-//
-//        helper.setText(emailContent, true);
-//        mailSender.send(mimeMessage);
-//    }
 
 
 
